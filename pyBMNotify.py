@@ -1,7 +1,9 @@
 from socketIO_client import SocketIO
 import json
+import datetime as dt
 
-tg = 98002
+tg = 31650
+id = ""
  
 def on_connect():
     print('connect')
@@ -13,18 +15,15 @@ def on_reconnect():
     print('reconnect')
 
 def on_mqtt(*args):
-    found = False
     out = ""
+    global id
     call = json.loads(args[0]['payload'])
-    for key,value in call.items():
-        if key == "DestinationID" and value == tg:
-            found = True
-        if found and key == "SourceCall":
-            out += value
-        if found and key == "SourceName":
-            out += " - " + value
-    if out:
+    if call["DestinationID"] == tg and id != call["_id"]:
+        time = dt.datetime.utcfromtimestamp(call["Start"]).strftime("%Y/%m/%d %H:%M")
+        out += call["SourceCall"] + ' (' + call["SourceName"] + ') was active on ' + str(tg) + ' at ' + time
         print(out)
+        #print(json.dumps(call,separators=(',',':'),sort_keys=True,indent=4))
+        id = call["_id"]
             
 
 socket = SocketIO('https://api.brandmeister.network/lh')
