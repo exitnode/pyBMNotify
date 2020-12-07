@@ -2,7 +2,7 @@ from socketIO_client import SocketIO
 import json
 import datetime as dt
 
-tg = [31650, 98002]
+tg = [91, 98002]
 id = ""
  
 def on_connect():
