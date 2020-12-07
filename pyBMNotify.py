@@ -2,7 +2,7 @@ from socketIO_client import SocketIO
 import json
 import datetime as dt
 
-tg = 31650
+tg = [31650, 98002]
 id = ""
  
 def on_connect():
@@ -18,9 +18,9 @@ def on_mqtt(*args):
     out = ""
     global id
     call = json.loads(args[0]['payload'])
-    if call["DestinationID"] == tg and id != call["_id"]:
+    if call["DestinationID"] in tg and id != call["_id"]:
         time = dt.datetime.utcfromtimestamp(call["Start"]).strftime("%Y/%m/%d %H:%M")
-        out += call["SourceCall"] + ' (' + call["SourceName"] + ') was active on ' + str(tg) + ' at ' + time
+        out += call["SourceCall"] + ' (' + call["SourceName"] + ') was active on ' + str(call["DestinationID"]) + ' (' + call["DestinationName"] + ') at ' + time
         print(out)
         #print(json.dumps(call,separators=(',',':'),sort_keys=True,indent=4))
         id = call["_id"]
