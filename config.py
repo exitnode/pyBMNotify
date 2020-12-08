@@ -10,4 +10,8 @@ verbose = True # Enable extra messages (console only)
 # Pushover configuration
 pushover_token = "" # Your Pushover API token
 pushover_user = "" # Your Pushover user key
-
+# Telegram configuration
+telegram_api_id = "" # Your Telegram API ID
+telegram_api_hash = "" # Your Telegram API Hash
+telegram_username = "" # The username you registered with @BotFather
+phone = "" # Your phone number, e.g. +491234567890

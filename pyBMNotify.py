@@ -6,6 +6,12 @@ import time
 import config as cfg
 import http.client, urllib
 
+if cfg.telegram_api_id != "" and cfg.telegram_api_hash != "" and cfg.telegram_username != "":
+    import telebot 
+    from telethon.sync import TelegramClient 
+    from telethon.tl.types import InputPeerUser, InputPeerChannel 
+    from telethon import TelegramClient, sync, events 
+
 last_TG_activity = {}
 last_OM_activity = {}
 
@@ -28,6 +34,24 @@ def push_message(msg):
             "message": msg,
             }), { "Content-type": "application/x-www-form-urlencoded" })
         conn.getresponse()
+    if cfg.telegram_api_id != "" and cfg.telegram_api_hash != "" and cfg.telegram_username != "" and cfg.phone != "":
+        # creating a telegram session and assigning it to a variable client 
+        client = TelegramClient('bm_bot', cfg.telegram_api_id, cfg.telegram_api_hash) 
+        # connecting and building the session 
+        client.connect() 
+        # in case of script ran first time it will ask either to input token or otp sent to 
+        # number or sent or your telegram id  
+        if not client.is_user_authorized(): 
+            client.send_code_request(cfg.phone) 
+            # signing in the client 
+            client.sign_in(cfg.phone, input('Enter the code: ')) 
+        try: 
+            receiver = InputPeerUser('user_id', 'user_hash') 
+            client.send_message(cfg.telegram_username, msg) 
+        except Exception as e: 
+            print(e); 
+        # disconnecting the telegram session  
+        client.disconnect() 
 
 def construct_message(c):
     tg = c["DestinationID"]
@@ -63,10 +87,9 @@ def on_mqtt(*args):
                 last_TG_activity[tg] = now
             # remember the transmission time stamp of this particular DMR user
             last_OM_activity[callsign] = now
-            #msg = construct_message(call)
             notify = True
-    # Continue if the talkgroup is monitored, the transmission has been finished and there was no activity
-    # during the last n seconds in this talkgroup
+    # Continue if the talkgroup is monitored, the transmission has been
+    # finished and there was no activity during the last n seconds in this talkgroup
     elif tg in cfg.talkgroups and stop_time > 0:# and callsign not in cfg.noisy_calls:
         if tg not in last_TG_activity:
             last_TG_activity[tg] = 9999999
@@ -76,7 +99,6 @@ def on_mqtt(*args):
         # only proceed if the key down has been long enough
         if duration >= cfg.min_duration:
             if tg not in last_TG_activity or inactivity >= cfg.min_silence:
-                #msg = construct_message(call)
                 notify = True
             elif cfg.verbose:
                 print("ignored activity in TG " + str(tg) + " from " + callsign + ": last action " + str(inactivity) + " seconds ago.")
