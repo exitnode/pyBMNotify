@@ -35,7 +35,7 @@ def construct_message(c):
     duration = c["Stop"] - c["Start"]
     # convert unix time stamp to human readable format
     time = dt.datetime.utcfromtimestamp(c["Start"]).strftime("%Y/%m/%d %H:%M")
-    # construct text message from various QSO properties
+    # construct text message from various transmission properties
     out += c["SourceCall"] + ' (' + c["SourceName"] + ') was active on '
     out += str(tg) + ' (' + c["DestinationName"] + ') at '
     out += time + ' (' + str(duration) + ' seconds)'
@@ -43,24 +43,24 @@ def construct_message(c):
     return out
 
 def on_mqtt(*args):
-    # get json data of QSO
+    # get json data of transmission
     call = json.loads(args[0]['payload'])
     tg = call["DestinationID"]
     callsign = call["SourceCall"]
     start_time = call["Start"]
     stop_time = call["Stop"]
     msg = ""
-    # check if callsign is monitored, the over has already been finished
+    # check if callsign is monitored, the transmission has already been finished
     # and the person was inactive for n seconds
     if callsign in cfg.callsigns:
         if callsign not in last_OM_activity or (last_OM_activity[callsign] + cfg.min_silence) < start_time:
-            # If the activity has happened in a monitored TG, remember the QSO start time stamp
+            # If the activity has happened in a monitored TG, remember the transmission start time stamp
             if tg in cfg.talkgroups and stop_time > 0:
                 last_TG_activity[tg] = start_time
-            # remember the QSO's time stamp of this particular DMR user
+            # remember the transmission time stamp of this particular DMR user
             last_OM_activity[callsign] = start_time
             msg = construct_message(call)
-    # Continue if the talkgroup is monitored, the over has been finished and there was no activity
+    # Continue if the talkgroup is monitored, the transmission has been finished and there was no activity
     # during the last n seconds in this talkgroup
     elif tg in cfg.talkgroups and stop_time > 0:
         if tg not in last_TG_activity or (last_TG_activity[tg] + cfg.min_silence) < start_time:

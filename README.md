@@ -1,6 +1,8 @@
 # pyBMNotify
 
-Monitors a defined set of Brandmeister talkgroups and callsigns for activity and sends push notifications via Pushover.
+Monitors a defined set of Brandmeister talkgroups and callsigns for activity. It then sends push notifications via Pushover for any transmission in / of the monitored talk groups / call signs.
+
+In order to prevent message flooding, the script only notifes you again after 300 (configurable) seconds of silence in a TG or from a monitored call sign.
 
 ## Credits
 
