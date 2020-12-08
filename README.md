@@ -31,3 +31,5 @@ Configure _config.py_ to your needs. If you don't want push notifications, set t
 ```
 # python3 pyBMNotify.py
 ```
+
+You might want to use a terminal multiplexer like screen or tmux to keep pyBMNotify running when you close the terminal.
