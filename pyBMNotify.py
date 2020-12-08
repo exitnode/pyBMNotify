@@ -76,8 +76,8 @@ def on_mqtt(*args):
         if duration >= cfg.min_duration:
             if tg not in last_TG_activity or inactivity >= cfg.min_silence:
                 msg = construct_message(call)
-            # DEBUG else:
-            # DEBUG    print("ignored activity in TG " + str(tg) + " from " + callsign + ": last action " + str(inactivity) + " seconds ago.")
+            elif cfg.verbose:
+                print("ignored activity in TG " + str(tg) + " from " + callsign + ": last action " + str(inactivity) + " seconds ago.")
             last_TG_activity[tg] = now
     # finally write the message to the console and send a push notification
     if msg != "":
