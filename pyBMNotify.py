@@ -6,6 +6,7 @@ import time
 import config as cfg
 import http.client, urllib
 
+# libraries only needed if Telegram is configured in config.py
 if cfg.telegram_api_id != "" and cfg.telegram_api_hash != "" and cfg.telegram_username != "":
     import telebot 
     from telethon.sync import TelegramClient 
@@ -24,7 +25,9 @@ def on_disconnect():
 def on_reconnect():
     print('Reconnecting')
 
+# Send push notification
 def push_message(msg):
+    # Push notification via Pushover. Disabled if not configured in config.py
     if cfg.pushover_token != "" and cfg.pushover_user != "":
         conn = http.client.HTTPSConnection("api.pushover.net:443")
         conn.request("POST", "/1/messages.json",
@@ -34,25 +37,21 @@ def push_message(msg):
             "message": msg,
             }), { "Content-type": "application/x-www-form-urlencoded" })
         conn.getresponse()
+    # Push notification via Telegram. Disabled if not configured in config.py
     if cfg.telegram_api_id != "" and cfg.telegram_api_hash != "" and cfg.telegram_username != "" and cfg.phone != "":
-        # creating a telegram session and assigning it to a variable client 
         client = TelegramClient('bm_bot', cfg.telegram_api_id, cfg.telegram_api_hash) 
-        # connecting and building the session 
         client.connect() 
-        # in case of script ran first time it will ask either to input token or otp sent to 
-        # number or sent or your telegram id  
         if not client.is_user_authorized(): 
             client.send_code_request(cfg.phone) 
-            # signing in the client 
-            client.sign_in(cfg.phone, input('Enter the code: ')) 
+            client.sign_in(cfg.phone, input('Please enter the code which has been sent to your phone: ')) 
         try: 
             receiver = InputPeerUser('user_id', 'user_hash') 
             client.send_message(cfg.telegram_username, msg) 
         except Exception as e: 
             print(e); 
-        # disconnecting the telegram session  
         client.disconnect() 
 
+# assemble the text message
 def construct_message(c):
     tg = c["DestinationID"]
     out = ""
@@ -66,6 +65,7 @@ def construct_message(c):
     # finally return the text message
     return out
 
+# where the magic happens
 def on_mqtt(*args):
     # get json data of transmission
     call = json.loads(args[0]['payload'])
