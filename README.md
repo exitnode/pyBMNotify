@@ -4,7 +4,7 @@ Monitors a defined set of Brandmeister talkgroups and callsigns for activity and
 
 ## Credits
 
-Inspired by [https://github.com/klinquist/bmPushNotification]
+Inspired by https://github.com/klinquist/bmPushNotification
 
 ## Requirements
 
