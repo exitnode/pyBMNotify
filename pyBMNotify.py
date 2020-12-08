@@ -66,7 +66,7 @@ def on_mqtt(*args):
             msg = construct_message(call)
     # Continue if the talkgroup is monitored, the transmission has been finished and there was no activity
     # during the last n seconds in this talkgroup
-    elif tg in cfg.talkgroups and stop_time > 0:
+    elif tg in cfg.talkgroups and stop_time > 0 and callsign not in cfg.noisy_calls:
         if tg not in last_TG_activity:
             last_TG_activity[tg] = 9999999
         inactivity = now - last_TG_activity[tg]
@@ -79,6 +79,8 @@ def on_mqtt(*args):
             elif cfg.verbose:
                 print("ignored activity in TG " + str(tg) + " from " + callsign + ": last action " + str(inactivity) + " seconds ago.")
             last_TG_activity[tg] = now
+    if cfg.verbose and callsign in cfg.noisy_calls:
+        print("ignored noisy ham " + callsign)
     # finally write the message to the console and send a push notification
     if msg != "":
         print(construct_message(call))
