@@ -15,8 +15,8 @@ Inspired by https://github.com/klinquist/bmPushNotification
 
 If you want to be notified via Telegram, the following libraries need to be installed:
 
- * telebot (install with _telebot_)
- * telethon (install with _telethon_)
+ * telebot (install with _sudo pip3 install telebot_)
+ * telethon (install with _sudo pip3 install telethon_)
 
 ## Configuration
 
