@@ -50,26 +50,35 @@ def on_mqtt(*args):
     start_time = call["Start"]
     stop_time = call["Stop"]
     msg = ""
+    now = int(time.time())
     # check if callsign is monitored, the transmission has already been finished
     # and the person was inactive for n seconds
     if callsign in cfg.callsigns:
-        if callsign not in last_OM_activity or (last_OM_activity[callsign] + cfg.min_silence) < start_time:
+        if callsign not in last_OM_activity:
+            last_OM_activity[callsign] = 9999999
+        inactivity = now - last_OM_activity[callsign]
+        if callsign not in last_OM_activity or inactivity >= cfg.min_silence:
             # If the activity has happened in a monitored TG, remember the transmission start time stamp
             if tg in cfg.talkgroups and stop_time > 0:
-                last_TG_activity[tg] = start_time
+                last_TG_activity[tg] = now
             # remember the transmission time stamp of this particular DMR user
-            last_OM_activity[callsign] = start_time
+            last_OM_activity[callsign] = now
             msg = construct_message(call)
     # Continue if the talkgroup is monitored, the transmission has been finished and there was no activity
     # during the last n seconds in this talkgroup
     elif tg in cfg.talkgroups and stop_time > 0:
-        if tg not in last_TG_activity or (last_TG_activity[tg] + cfg.min_silence) < start_time:
-            # calculate duration of key down
-            duration = stop_time - start_time
-            # only proceed if the key down has been long enough
-            if duration >= cfg.min_duration:
-                last_TG_activity[tg] = start_time
+        if tg not in last_TG_activity:
+            last_TG_activity[tg] = 9999999
+        inactivity = now - last_TG_activity[tg]
+        # calculate duration of key down
+        duration = stop_time - start_time
+        # only proceed if the key down has been long enough
+        if duration >= cfg.min_duration:
+            if tg not in last_TG_activity or inactivity >= cfg.min_silence:
                 msg = construct_message(call)
+            # DEBUG else:
+            # DEBUG    print("ignored activity in TG " + str(tg) + " from " + callsign + ": last action " + str(inactivity) + " seconds ago.")
+            last_TG_activity[tg] = now
     # finally write the message to the console and send a push notification
     if msg != "":
         print(construct_message(call))
