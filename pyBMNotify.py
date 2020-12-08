@@ -7,11 +7,16 @@ import config as cfg
 import http.client, urllib
 
 # libraries only needed if Telegram is configured in config.py
-if cfg.telegram_api_id != "" and cfg.telegram_api_hash != "" and cfg.telegram_username != "":
+if cfg.telegram:
     import telebot 
     from telethon.sync import TelegramClient 
     from telethon.tl.types import InputPeerUser, InputPeerChannel 
     from telethon import TelegramClient, sync, events 
+
+# libraries only needed if dapnet is configured in config.py
+if cfg.dapnet:
+    import requests
+    from requests.auth import HTTPBasicAuth
 
 last_TG_activity = {}
 last_OM_activity = {}
@@ -25,31 +30,35 @@ def on_disconnect():
 def on_reconnect():
     print('Reconnecting')
 
-# Send push notification
-def push_message(msg):
-    # Push notification via Pushover. Disabled if not configured in config.py
-    if cfg.pushover_token != "" and cfg.pushover_user != "":
-        conn = http.client.HTTPSConnection("api.pushover.net:443")
-        conn.request("POST", "/1/messages.json",
-            urllib.parse.urlencode({
-            "token": cfg.pushover_token,
-            "user": cfg.pushover_user,
-            "message": msg,
-            }), { "Content-type": "application/x-www-form-urlencoded" })
-        conn.getresponse()
-    # Push notification via Telegram. Disabled if not configured in config.py
-    if cfg.telegram_api_id != "" and cfg.telegram_api_hash != "" and cfg.telegram_username != "" and cfg.phone != "":
-        client = TelegramClient('bm_bot', cfg.telegram_api_id, cfg.telegram_api_hash) 
-        client.connect() 
-        if not client.is_user_authorized(): 
-            client.send_code_request(cfg.phone) 
-            client.sign_in(cfg.phone, input('Please enter the code which has been sent to your phone: ')) 
-        try: 
-            receiver = InputPeerUser('user_id', 'user_hash') 
-            client.send_message(cfg.telegram_username, msg) 
-        except Exception as e: 
-            print(e); 
-        client.disconnect() 
+# Send push notification via Pushover. Disabled if not configured in config.py
+def push_pushover(msg):
+    conn = http.client.HTTPSConnection("api.pushover.net:443")
+    conn.request("POST", "/1/messages.json",
+        urllib.parse.urlencode({
+        "token": cfg.pushover_token,
+        "user": cfg.pushover_user,
+        "message": msg,
+        }), { "Content-type": "application/x-www-form-urlencoded" })
+    conn.getresponse()
+
+# Send push notification via Telegram. Disabled if not configured in config.py
+def push_telegram(msg):
+    client = TelegramClient('bm_bot', cfg.telegram_api_id, cfg.telegram_api_hash) 
+    client.connect() 
+    if not client.is_user_authorized(): 
+        client.send_code_request(cfg.phone) 
+        client.sign_in(cfg.phone, input('Please enter the code which has been sent to your phone: ')) 
+    try: 
+        receiver = InputPeerUser('user_id', 'user_hash') 
+        client.send_message(cfg.telegram_username, msg) 
+    except Exception as e: 
+        print(e); 
+    client.disconnect() 
+
+# send pager notification via DAPNET. Disabled if not configured in config.py
+def push_dapnet(msg):
+    dapnet_json = json.dumps({"text": msg, "callSignNames": cfg.dapnet_callsigns, "transmitterGroupNames": [cfg.dapnet_txgroup], "emergency": True})
+    response = requests.post(cfg.dapnet_url, data=dapnet_json, auth=HTTPBasicAuth(cfg.dapnet_user,cfg.dapnet_pass)) 
 
 # assemble the text message
 def construct_message(c):
@@ -109,7 +118,12 @@ def on_mqtt(*args):
     if notify:
         msg = construct_message(call)
         print(msg)
-        push_message(msg)
+        if cfg.pushover:
+            push_pushover(msg)
+        if cfg.telegram:
+            push_telegram(msg)
+        if cfg.dapnet:
+            push_dapnet(msg)
 
 socket = SocketIO('https://api.brandmeister.network/lh')
 socket.on('connect', on_connect)
